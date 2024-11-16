@@ -23,7 +23,7 @@
 
     <transition-group name="fade" tag="ul">
       <li v-for="task in sortedTasks" :key="task.id" :id="'task-' + task.id" :class="{ completed: task.completed }">
-        <q-checkbox v-model="task.completed" />
+        <q-checkbox v-model="task.completed" @update:model-value="updateTaskCompletion(task)" />
         <span :class="{
           'high-priority': task.priority === 'high',
           'medium-priority': task.priority === 'medium'
@@ -36,6 +36,7 @@
     </transition-group>
   </q-page>
 </template>
+
 
 <script lang="ts">
 import { defineComponent, reactive, ref, computed, nextTick, watch } from 'vue';
@@ -85,6 +86,16 @@ export default defineComponent({
       }
     };
 
+    const updateTaskCompletion = (task: Task) => {
+      if (task.completed) {
+        $q.notify({
+          message: 'Task completed!',
+          type: 'info',
+        });
+      }
+    };
+
+
     const enableEdit = (id: number) => {
       editTaskId.value = id;
     };
@@ -108,14 +119,23 @@ export default defineComponent({
     const completedTasks = computed(() => tasks.filter(task => task.completed).length);
 
     watch(tasks, (newTasks, oldTasks) => {
+      newTasks.forEach((task, index) => {
+        if (!oldTasks[index]?.completed && task.completed) {
+          $q.notify({
+            message: `Task "${task.title}" completed!`,
+            type: 'positive',
+          });
+        }
+      });
+
       if (newTasks.length > oldTasks.length) {
         $q.notify({
-          message: 'Task added via watcher!',
+          message: 'Task added!',
           type: 'positive',
         });
       } else if (newTasks.length < oldTasks.length) {
         $q.notify({
-          message: 'Task removed via watcher!',
+          message: 'Task removed!',
           type: 'negative',
         });
       }
@@ -128,6 +148,7 @@ export default defineComponent({
       deleteTask,
       enableEdit,
       saveTask,
+      updateTaskCompletion,
       editTaskId,
       sortedTasks,
       totalTasks,
